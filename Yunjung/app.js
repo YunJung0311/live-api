@@ -8,7 +8,7 @@ let current = null;
 function state(name, message) {
   document.body.dataset.state = name;
   const chat = current?.mode === 'chat';
-  $('status').textContent = { idle: '연결 전', connecting: '연결 중', listening: chat ? '메시지 대기 중' : '듣는 중', speaking: '여운이 말하는 중', error: '연결 확인 필요' }[name];
+  $('status').textContent = { idle: 'STANDBY · 연결 전', connecting: 'CONNECTING · 연결 중', listening: chat ? 'YOUR TURN · 메시지 대기' : 'LISTENING · 듣는 중', speaking: 'ON AIR · 비트가 말하는 중', error: 'CHECK · 연결 확인 필요' }[name];
   $('hint').textContent = message ?? { idle: '시작 버튼을 누르면 마이크를 연결해요.', connecting: chat ? '채팅 대화를 준비하고 있어요.' : '마이크와 대화를 준비하고 있어요.', listening: chat ? '아래 입력란으로 메시지를 보내주세요.' : '편하게 말을 걸어주세요.', speaking: '답변 중에도 편하게 말씀하세요.', error: '안내를 확인하고 다시 시작해 주세요.' }[name];
 }
 
@@ -65,7 +65,7 @@ function transcript(session, role, text, finished) {
     const entry = document.createElement('div');
     entry.className = `utterance ${role}`;
     const label = document.createElement('strong');
-    label.textContent = role === 'user' ? '나' : '여운';
+    label.textContent = role === 'user' ? '나' : '비트';
     const line = document.createElement('p');
     entry.append(label, line);
     log.append(entry);

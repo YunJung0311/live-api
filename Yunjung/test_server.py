@@ -90,11 +90,11 @@ class RelayTests(unittest.IsolatedAsyncioTestCase):
                     await socket.send_json({'type': 'start', 'apiKey': 'fake-secret'})
                     self.assertEqual((await socket.receive_json())['type'], 'ready')
                     await socket.send_bytes(b'\x00\x00\xff\x7f')
-                    await socket.send_json({'type': 'text', 'text': '안녕, 여운'})
+                    await socket.send_json({'type': 'text', 'text': '안녕, 비트'})
                     self.assertEqual((await socket.receive_json())['content'], content)
                     self.assertTrue((await socket.receive_json())['content']['interrupted'])
                 await asyncio.wait_for(closed.wait(), 3)
-        self.assertEqual(received[2], {'realtimeInput': {'text': '안녕, 여운'}})
+        self.assertEqual(received[2], {'realtimeInput': {'text': '안녕, 비트'}})
         setup = received[0]['setup']
         self.assertEqual(setup['model'], 'models/gemini-3.1-flash-live-preview')
         self.assertEqual(setup['generationConfig']['responseModalities'], ['AUDIO'])
