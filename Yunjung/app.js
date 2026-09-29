@@ -1,4 +1,5 @@
 import { AudioPlayer } from './audio.js';
+import { CharacterActivity, animateCharacter } from './character.js';
 
 const $ = (id) => document.getElementById(id);
 const startButton = $('start');
@@ -7,9 +8,10 @@ let current = null;
 
 function state(name, message) {
   document.body.dataset.state = name;
+  $('character-mood').textContent = { idle: '비트 타는 중', connecting: '세션 연결 중', listening: current?.mode === 'chat' ? '다음 한마디를 기다리는 중' : '네 플로우에 집중하는 중', processing: '다음 한마디를 고르는 중', speaking: '지금은 비트의 턴. 스껄!', error: '잠깐, 연결을 확인해 줘' }[name];
   const chat = current?.mode === 'chat';
-  $('status').textContent = { idle: '연결 전', connecting: '연결 중', listening: chat ? '메시지 대기 중' : '듣는 중', speaking: '여운이 말하는 중', error: '연결 확인 필요' }[name];
-  $('hint').textContent = message ?? { idle: '시작 버튼을 누르면 마이크를 연결해요.', connecting: chat ? '채팅 대화를 준비하고 있어요.' : '마이크와 대화를 준비하고 있어요.', listening: chat ? '아래 입력란으로 메시지를 보내주세요.' : '편하게 말을 걸어주세요.', speaking: '답변 중에도 편하게 말씀하세요.', error: '안내를 확인하고 다시 시작해 주세요.' }[name];
+  $('status').textContent = { idle: 'STANDBY · 연결 전', connecting: 'CONNECTING · 연결 중', processing: 'SAMPLING · 응답 준비 중', listening: chat ? 'YOUR TURN · 메시지 대기' : 'LISTENING · 듣는 중', speaking: 'ON AIR · 비트가 말하는 중', error: 'CHECK · 연결 확인 필요' }[name];
+  $('hint').textContent = message ?? { idle: '시작 버튼을 누르면 마이크를 연결해요.', connecting: chat ? '채팅 대화를 준비하고 있어요.' : '마이크와 대화를 준비하고 있어요.', processing: '네 말을 받아 다음 응답을 준비하고 있어요.', listening: chat ? '아래 입력란으로 메시지를 보내주세요.' : '편하게 말을 걸어주세요.', speaking: '답변 중에도 편하게 말씀하세요.', error: '안내를 확인하고 다시 시작해 주세요.' }[name];
 }
 
 function notice(message = '') {
@@ -30,7 +32,9 @@ function finish(session, message = '') {
     session.worklet.disconnect();
   }
   session.source?.disconnect();
+  session.stopAnimation?.();
   session.player?.clear();
+  session.analyser?.disconnect();
   if (session.socket) {
     session.socket.onmessage = null;
     session.socket.onopen = null;
@@ -65,7 +69,7 @@ function transcript(session, role, text, finished) {
     const entry = document.createElement('div');
     entry.className = `utterance ${role}`;
     const label = document.createElement('strong');
-    label.textContent = role === 'user' ? '나' : '여운';
+    label.textContent = role === 'user' ? '나' : '비트';
     const line = document.createElement('p');
     entry.append(label, line);
     log.append(entry);
@@ -95,6 +99,7 @@ function receive(session, event) {
     if (message.type !== 'content') return;
     const content = message.content;
     if (content.interrupted) {
+      session.activity.interrupted();
       session.player.clear();
       session.lines = {};
     }
@@ -102,12 +107,18 @@ function receive(session, event) {
     for (const [key, role] of [['inputTranscription', 'user'], ['outputTranscription', 'agent']]) {
       if (content[key]) transcript(session, role, content[key].text, content[key].finished);
     }
+    if (!content.interrupted && content.inputTranscription?.finished) {
+      session.activity.submitted(performance.now());
+    }
     if (!content.interrupted) {
       for (const part of content.modelTurn?.parts ?? []) {
         if (part.inlineData) session.player.enqueue(part.inlineData.data, part.inlineData.mimeType);
       }
     }
-    if (content.turnComplete) session.lines = {};
+    if (content.turnComplete) {
+      session.lines = {};
+      session.activity.complete();
+    }
   } catch {
     finish(session, '오디오 응답을 처리하지 못했습니다. 다시 시작해 주세요.');
   }
@@ -139,9 +150,16 @@ async function start() {
     const config = await response.json();
     if (!config.configured && !session.apiKey) throw new Error('화면에 API 키를 입력하거나 Yunjung/.env에 GEMINI_API_KEY를 저장해 주세요.');
     if (session.done) return;
-    session.player = new AudioPlayer(session.context, (speaking) => {
-      if (!session.done && session.ready) state(speaking ? 'speaking' : 'listening');
+    session.activity = new CharacterActivity((name) => {
+      if (!session.done && session.ready) state(name);
     });
+    session.analyser = session.context.createAnalyser();
+    session.analyser.fftSize = 256;
+    session.analyser.connect(session.context.destination);
+    session.player = new AudioPlayer(session.context, (speaking) => {
+      if (!session.done && session.ready) session.activity.playback(speaking);
+    }, session.analyser);
+    session.stopAnimation = animateCharacter($('beat-character'), session);
     if (session.mode === 'voice') {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: {
         channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true,
@@ -174,6 +192,9 @@ async function start() {
         return;
       }
       $('level').value = Math.min(1, data.level * 5);
+      session.micLevel = $('level').value;
+      session.lastMicAt = performance.now();
+      session.activity.input(data.level, session.lastMicAt);
       socket.send(data.pcm);
     };
   } catch (error) {
@@ -200,6 +221,7 @@ $('chat-form').addEventListener('submit', (event) => {
   if (session.socket.bufferedAmount > 64000) { notice('전송이 지연되고 있어요. 잠시 후 다시 보내주세요.'); return; }
   session.socket.send(JSON.stringify({ type: 'text', text }));
   session.player.clear();
+  session.activity.submitted(performance.now());
   session.lines = {};
   transcript(session, 'user', text, true);
   $('chat-input').value = '';
@@ -211,3 +233,16 @@ $('chat-input').addEventListener('keydown', (event) => {
     $('chat-form').requestSubmit();
   }
 });
+
+const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+let motionEnabled = !motionPreference.matches;
+function updateMotion() {
+  const enabled = motionEnabled && !motionPreference.matches;
+  $('beat-character').dataset.motion = enabled ? 'on' : 'off';
+  $('motion-toggle').setAttribute('aria-pressed', String(enabled));
+  $('motion-toggle').disabled = motionPreference.matches;
+  $('motion-toggle').textContent = motionPreference.matches ? '동작 줄이기 적용 중' : enabled ? '움직임 끄기' : '움직임 켜기';
+}
+$('motion-toggle').addEventListener('click', () => { motionEnabled = !motionEnabled; updateMotion(); });
+motionPreference.addEventListener('change', updateMotion);
+updateMotion();

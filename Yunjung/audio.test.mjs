@@ -77,3 +77,20 @@ test('invalid audio is rejected before scheduling playback', () => {
   assert.throws(() => player.enqueue('AAA=', 'audio/pcm;rate=1'));
   assert.equal(context.sources.length, 0);
 });
+
+test('optional analysis output receives audio without duplicating the speaker path', () => {
+  const context = fakeContext();
+  const destinations = [];
+  const createSource = context.createBufferSource.bind(context);
+  context.createBufferSource = () => {
+    const source = createSource();
+    source.connect = output => destinations.push(output);
+    return source;
+  };
+  const analyser = {};
+  const player = new AudioPlayer(context, () => {}, analyser);
+  player.enqueue('AAA=', 'audio/pcm;rate=24000');
+  assert.deepEqual(destinations, [analyser]);
+  player.clear();
+  assert.ok(context.sources[0].stopped);
+});

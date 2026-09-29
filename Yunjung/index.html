@@ -3,37 +3,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>여운 · 조금 서툴러도 괜찮은 대화</title>
+  <meta name="theme-color" content="#20201e">
+  <title>BEAT — Live Voice Machine</title>
   <link rel="stylesheet" href="/style.css">
   <script type="module" src="/app.js"></script>
 </head>
 <body data-state="idle">
-  <header><a href="/" class="brand">여운 <span>YEOWOON</span></a><span class="edition">YUNJUNG / VOICE EXPERIMENT 01</span></header>
-  <main>
-    <section class="intro" aria-labelledby="title">
-      <p class="eyebrow">조금 소심한 대화 상대, 여운</p>
-      <h1 id="title">저… 우리,<br>조금 이야기할까요?</h1>
-      <p class="description">처음엔 조금 낯을 가리지만, 당신의 이야기가 궁금해요.<br>서두르지 않아도 괜찮아요.</p>
-      <div class="orb-scene" aria-hidden="true"><div class="ring ring-one"></div><div class="ring ring-two"></div><div class="orb"></div></div>
-      <div class="status" role="status"><span class="dot"></span><span id="status">연결 전</span></div>
-      <p id="hint">시작 버튼을 누르면 마이크를 연결해요.</p>
-      <div class="key-field">
-        <label for="api-key">Gemini API 키 <span>선택 입력</span></label>
-        <input id="api-key" type="password" autocomplete="off" spellcheck="false" maxlength="512" placeholder="API 키를 입력하세요" aria-describedby="key-help">
-        <p id="key-help">비워두면 .env의 키를 사용해요. 입력한 키는 이번 대화에만 사용하며 저장하지 않아요.</p>
+  <a class="skip-link" href="#start">대화 시작으로 건너뛰기</a>
+  <div class="machine">
+    <header class="masthead">
+      <div class="topline"><span>YUNJUNG SOUND DEPT.</span><span>INDEPENDENT VOICE EXPERIMENT — VOL. 01</span><span class="edition">EST. 2026</span></div>
+      <div class="identity">
+        <h1><a href="/" class="brand" aria-label="비트 BEAT 홈">BEAT<span class="brand-dot" aria-hidden="true">✳</span></a></h1>
+        <div class="identity-note"><span class="unit-mark" aria-hidden="true">↗</span><p>LIVE VOICE<br>MACHINE</p><span class="mono">HIP-HOP IN. HIP-HOP OUT.</span></div>
+        <div class="identity-stamp" aria-hidden="true"><span>ORIGINAL PRESSING</span><strong>B/01</strong><span>THE HUMAN SIDE OF AI</span></div>
       </div>
-      <fieldset id="input-mode"><legend>대화 입력 방식</legend><label><input type="radio" name="mode" value="voice" checked> 마이크</label><label><input type="radio" name="mode" value="chat"> 채팅만</label></fieldset>
-      <div class="controls"><button id="start" class="primary">대화 시작 <span aria-hidden="true">↗</span></button><button id="stop" disabled>대화 종료</button></div>
-      <p id="notice" role="alert" hidden></p>
-      <div class="meter-wrap"><span>마이크</span><meter id="level" min="0" max="1" value="0" aria-label="마이크 입력 크기"></meter><span id="mic-state">꺼짐</span></div>
-    </section>
-    <aside class="conversation" aria-labelledby="conversation-title">
-      <div class="panel-heading"><h2 id="conversation-title">함께 나눈 이야기</h2><span>LIVE</span></div>
-      <div id="transcript" role="log" aria-label="대화 자막" aria-live="polite"><p class="empty">아직은 고요해요.<br>“안녕, 여운” 하고 말을 걸어보세요.</p></div>
-      <form id="chat-form"><label for="chat-input">메시지</label><textarea id="chat-input" rows="2" maxlength="2000" placeholder="대화를 시작한 뒤 메시지를 입력하세요" disabled></textarea><button id="send" type="submit" disabled>보내기</button></form>
-      <p class="caption">대화 자막은 이 화면에만 표시해요.<br>새 대화를 시작하면 이전 자막은 지워집니다.</p>
-    </aside>
-  </main>
-  <footer><span>여운은 가상의 인격을 가진 AI 음성 에이전트입니다.</span><span>답변 중에도 편하게 말씀하세요.</span></footer>
+      <div class="header-strip"><span>REALTIME HIP-HOP AUDIO SYSTEM</span><span class="strip-right">비트 / 세상을 음악으로 듣는 녀석</span></div>
+    </header>
+
+    <main>
+      <section class="deck" aria-labelledby="deck-title">
+        <div class="deck-top"><h2 id="deck-title">01 / MEET THE BEAT</h2><span class="mono">INPUT → FLOW → OUTPUT</span></div>
+        <div class="status-strip"><div class="status" role="status"><span class="dot" aria-hidden="true"></span><span id="status">STANDBY · 연결 전</span></div><span class="signal-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+        <div class="character-stage" id="beat-character" data-motion="on">
+          <div class="character-orbit" aria-hidden="true"></div>
+          <div class="stage-platter" aria-hidden="true"><div class="vinyl"></div></div>
+          <div class="character-energy" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="character-bounce">
+            <svg class="beat-character" viewBox="0 0 1254 1254" role="img" aria-labelledby="character-title">
+              <title id="character-title">보라색 스냅백을 쓴 비트. 디스플레이의 눈과 몸짓으로 대화에 반응하는 힙합 로봇.</title>
+              <image href="/assets/beat-mascot.png" width="1254" height="1254" />
+              <!-- A separate OLED face layer preserves the original PNG. -->
+              <g class="character-face">
+                <path class="face-screen" d="M489 295 Q463 291 455 322 L422 536 Q412 575 449 588 L833 653 Q868 660 885 633 L920 413 Q928 384 895 372 Z" />
+                <g transform="translate(550 450) rotate(11)"><g class="eye-blink"><rect class="eye eye-left" x="-61" y="-48" width="122" height="96" rx="45" /></g></g>
+                <g transform="translate(783 490) rotate(11)"><g class="eye-blink"><rect class="eye eye-right" x="-60" y="-57" width="120" height="114" rx="53" /></g></g>
+                <g class="thinking-pixels" transform="translate(607 562) rotate(11)" aria-hidden="true"><circle cx="0" cy="0" r="7"/><circle cx="30" cy="0" r="7"/><circle cx="60" cy="0" r="7"/></g>
+              </g>
+            </svg>
+          </div>
+          <div class="character-caption"><span class="power-led" aria-hidden="true"></span><span id="character-mood">비트 타는 중</span></div>
+          <span class="character-side-label" aria-hidden="true">B-SIDE<br>SOUL / ONLINE</span>
+        </div>
+        <div class="character-toolbar"><span class="mono">BEAT / 100% MUSIC HEAD</span><button id="motion-toggle" type="button" aria-pressed="true" aria-controls="beat-character">움직임 끄기</button></div>
+        <div class="deck-bottom"><div class="meter-wrap"><div class="meter-label"><label for="level">MIC INPUT</label><span id="mic-state">꺼짐</span></div><meter id="level" min="0" max="1" value="0" aria-label="마이크 입력 크기"></meter></div><span class="format-label">16K<span>PCM / MONO</span></span></div>
+      </section>
+
+      <aside class="conversation paper" aria-labelledby="conversation-title">
+        <span class="tape" aria-hidden="true"></span>
+        <div class="panel-heading"><h2 id="conversation-title">02 / SESSION NOTES</h2><span class="mono">대화 자막</span></div>
+        <div class="paper-intro"><span class="sticker">DROP A LINE.</span><p>네 한마디가 다음 트랙이 돼.</p></div>
+        <div id="transcript" role="log" aria-label="대화 자막" aria-live="polite" tabindex="0">
+          <div class="empty"><span class="empty-index">[ NEEDLE DOWN. WORLD OFF. ]</span><p>체크 원 투.<br>오늘 무슨<br><strong>바이브인데?</strong></p><span>Yo. 비트다. 뭐든 던져봐.<br>음악 얘기면 더 좋고. 스껄.</span><div class="mascot-slot" aria-hidden="true"><span class="mascot-badge">B<span>★</span></span><span>BEAT UNIT<br>100% MUSIC HEAD</span></div></div>
+        </div>
+        <form id="chat-form"><label for="chat-input">YOUR NEXT BAR <span>메시지</span></label><div class="message-row"><textarea id="chat-input" rows="2" maxlength="2000" placeholder="대화를 시작한 뒤 메시지를 입력하세요" disabled></textarea><button id="send" type="submit" disabled aria-label="메시지 보내기"><span aria-hidden="true">↗</span>보내기</button></div></form>
+        <p class="caption">자막은 이 화면에만 표시됩니다. 새 대화를 시작하면 지워집니다.</p>
+      </aside>
+
+      <section class="control-panel" aria-labelledby="controls-title">
+        <div class="session-controls"><h2 id="controls-title">03 / SESSION CONTROL</h2><div class="controls"><button id="start" class="primary"><span class="pad-icon" aria-hidden="true">▶</span><span>START SESSION<small>대화 시작</small></span><span class="pad-number" aria-hidden="true">01</span></button><button id="stop" disabled><span class="pad-icon" aria-hidden="true">■</span><span>CUT<small>대화 종료</small></span><span class="pad-number" aria-hidden="true">02</span></button></div><p id="hint">시작 버튼을 누르면 마이크를 연결해요.</p><p id="notice" role="alert" hidden></p></div>
+        <div class="input-controls"><fieldset id="input-mode"><legend>INPUT SELECT <span>대화 입력 방식</span></legend><div class="mode-switch"><label><input type="radio" name="mode" value="voice" checked><span>MIC<small>마이크</small></span></label><label><input type="radio" name="mode" value="chat"><span>TEXT<small>채팅만</small></span></label></div></fieldset><p class="control-note">비트가 말하는 중에도 끼어들 수 있어요.</p></div>
+        <div class="key-field"><label for="api-key">ACCESS KEY <span>Gemini API 키 · 선택 입력</span></label><input id="api-key" type="password" autocomplete="off" spellcheck="false" maxlength="512" placeholder="키가 저장되어 있다면 비워두세요" aria-describedby="key-help"><p id="key-help">비워두면 서버에 저장된 키를 사용합니다.<br>입력한 키는 이번 대화에만 사용하며 저장하지 않습니다.</p></div>
+      </section>
+    </main>
+    <footer><span class="footer-brand">BEAT<span>CHECK ONE TWO.</span></span><p>비트는 가상의 인격을 가진 AI 음성 에이전트입니다.</p><span class="mono">MADE FOR THE CONVERSATION. ↗</span></footer>
+  </div>
 </body>
 </html>

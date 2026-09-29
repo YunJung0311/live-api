@@ -19,7 +19,8 @@ MODEL = 'gemini-3.1-flash-live-preview'
 ENDPOINT = ('wss://generativelanguage.googleapis.com/ws/'
             'google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent')
 ASSETS = {'/': 'index.html', '/style.css': 'style.css', '/app.js': 'app.js',
-          '/audio.js': 'audio.js', '/pcm-worklet.js': 'pcm-worklet.js'}
+          '/audio.js': 'audio.js', '/pcm-worklet.js': 'pcm-worklet.js',
+          '/character.js': 'character.js', '/assets/beat-mascot.png': 'assets/beat-mascot.png'}
 
 
 def read_key():
@@ -169,7 +170,7 @@ def create_app():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='여운 로컬 음성 에이전트')
+    parser = argparse.ArgumentParser(description='비트 로컬 음성 에이전트')
     parser.add_argument('--port', type=int, default=8000)
     args = parser.parse_args()
     web.run_app(create_app(), host='127.0.0.1', port=args.port, access_log=None)
