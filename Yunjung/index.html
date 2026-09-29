@@ -23,14 +23,29 @@
 
     <main>
       <section class="deck" aria-labelledby="deck-title">
-        <div class="deck-top"><h2 id="deck-title">01 / THE TURNTABLE</h2><span class="mono">INPUT → FLOW → OUTPUT</span></div>
+        <div class="deck-top"><h2 id="deck-title">01 / MEET THE BEAT</h2><span class="mono">INPUT → FLOW → OUTPUT</span></div>
         <div class="status-strip"><div class="status" role="status"><span class="dot" aria-hidden="true"></span><span id="status">STANDBY · 연결 전</span></div><span class="signal-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
-        <div class="turntable" aria-hidden="true">
-          <div class="platter"><div class="vinyl"><div class="record-label"><span>BEAT RECORDS</span><strong>B<span>●</span></strong><span>SIDE A · LIVE VOICE</span><span class="spindle"></span></div><span class="record-etch">ALL TALK. ALL GROOVE.</span></div></div>
-          <div class="tonearm-base"></div><div class="tonearm"><span></span></div>
-          <div class="deck-corner"><span class="power-led"></span><span>DIRECT DRIVE<br>VOICE UNIT</span></div>
-          <span class="vinyl-caption">NO SKIPS.<br>JUST CONVERSATION.</span>
+        <div class="character-stage" id="beat-character" data-motion="on">
+          <div class="character-orbit" aria-hidden="true"></div>
+          <div class="stage-platter" aria-hidden="true"><div class="vinyl"></div></div>
+          <div class="character-energy" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="character-bounce">
+            <svg class="beat-character" viewBox="0 0 1254 1254" role="img" aria-labelledby="character-title">
+              <title id="character-title">보라색 스냅백을 쓴 비트. 디스플레이의 눈과 몸짓으로 대화에 반응하는 힙합 로봇.</title>
+              <image href="/assets/beat-mascot.png" width="1254" height="1254" />
+              <!-- A separate OLED face layer preserves the original PNG. -->
+              <g class="character-face">
+                <path class="face-screen" d="M489 295 Q463 291 455 322 L422 536 Q412 575 449 588 L833 653 Q868 660 885 633 L920 413 Q928 384 895 372 Z" />
+                <g transform="translate(550 450) rotate(11)"><g class="eye-blink"><rect class="eye eye-left" x="-61" y="-48" width="122" height="96" rx="45" /></g></g>
+                <g transform="translate(783 490) rotate(11)"><g class="eye-blink"><rect class="eye eye-right" x="-60" y="-57" width="120" height="114" rx="53" /></g></g>
+                <g class="thinking-pixels" transform="translate(607 562) rotate(11)" aria-hidden="true"><circle cx="0" cy="0" r="7"/><circle cx="30" cy="0" r="7"/><circle cx="60" cy="0" r="7"/></g>
+              </g>
+            </svg>
+          </div>
+          <div class="character-caption"><span class="power-led" aria-hidden="true"></span><span id="character-mood">비트 타는 중</span></div>
+          <span class="character-side-label" aria-hidden="true">B-SIDE<br>SOUL / ONLINE</span>
         </div>
+        <div class="character-toolbar"><span class="mono">BEAT / 100% MUSIC HEAD</span><button id="motion-toggle" type="button" aria-pressed="true" aria-controls="beat-character">움직임 끄기</button></div>
         <div class="deck-bottom"><div class="meter-wrap"><div class="meter-label"><label for="level">MIC INPUT</label><span id="mic-state">꺼짐</span></div><meter id="level" min="0" max="1" value="0" aria-label="마이크 입력 크기"></meter></div><span class="format-label">16K<span>PCM / MONO</span></span></div>
       </section>
 

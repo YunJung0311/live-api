@@ -38,9 +38,10 @@ export class PCMEncoder {
 }
 
 export class AudioPlayer {
-  constructor(context, onSpeaking) {
+  constructor(context, onSpeaking, output = context.destination) {
     this.context = context;
     this.onSpeaking = onSpeaking;
+    this.output = output;
     this.sources = new Set();
     this.nextTime = 0;
   }
@@ -58,7 +59,7 @@ export class AudioPlayer {
     for (let i = 0; i < channel.length; i++) channel[i] = view.getInt16(i * 2, true) / 32768;
     const source = this.context.createBufferSource();
     source.buffer = buffer;
-    source.connect(this.context.destination);
+    source.connect(this.output);
     this.sources.add(source);
     source.onended = () => {
       source.disconnect();

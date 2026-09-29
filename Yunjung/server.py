@@ -19,7 +19,8 @@ MODEL = 'gemini-3.1-flash-live-preview'
 ENDPOINT = ('wss://generativelanguage.googleapis.com/ws/'
             'google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent')
 ASSETS = {'/': 'index.html', '/style.css': 'style.css', '/app.js': 'app.js',
-          '/audio.js': 'audio.js', '/pcm-worklet.js': 'pcm-worklet.js'}
+          '/audio.js': 'audio.js', '/pcm-worklet.js': 'pcm-worklet.js',
+          '/character.js': 'character.js', '/assets/beat-mascot.png': 'assets/beat-mascot.png'}
 
 
 def read_key():

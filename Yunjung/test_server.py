@@ -27,7 +27,7 @@ class RelayTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(response.status, 200, path)
             self.assertIn("frame-ancestors 'none'", response.headers['Content-Security-Policy'])
             await response.read()
-        for path in ('/.env', '/server.py', '/persona.txt', '/.venv/pyvenv.cfg', '/README.md', '/../.env'):
+        for path in ('/.env', '/server.py', '/persona.txt', '/.venv/pyvenv.cfg', '/README.md', '/../.env', '/assets/beat-mascot-prompt.txt', '/character.test.mjs'):
             response = await self.client.get(path)
             self.assertEqual(response.status, 404, path)
 
