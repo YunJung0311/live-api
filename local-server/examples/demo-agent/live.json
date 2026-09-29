@@ -1,0 +1,10 @@
+{
+  "name": "Demo Agent",
+  "setup": "",
+  "run": ["python3 -m http.server 8080 --bind 127.0.0.1"],
+  "browser": { "url": "http://localhost:8080/" },
+  "files": {
+    "key.js": "window.GEMINI_KEY = \"${GEMINI_API_KEY}\";\n"
+  },
+  "prompt_file": "persona.txt"
+}

@@ -1,0 +1,6 @@
+# 토큰, API 키, 업로드 파일이 들어있음. 절대 커밋 금지
+controller/data/
+.venv/
+__pycache__/
+*.pyc
+examples/*/key.js

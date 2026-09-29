@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Control</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>LIVE CONTROL</h1>
+    <span id="count">0 / 0 online</span>
+    <span id="conn"></span>
+  </header>
+
+  <main>
+    <section class="panels">
+      <div class="panel" id="show">
+        <h2>쇼 <span id="mode" class="badge">idle</span></h2>
+        <p id="show-info" class="muted"></p>
+        <div class="row">
+          <input id="topic" placeholder="대화 주제 (예: 오늘 날씨)">
+          <button id="chat-start" class="primary">대화 시작</button>
+          <button id="chat-stop" class="danger">그만</button>
+        </div>
+        <details>
+          <summary>쇼 설정</summary>
+          <label>첫 발언자
+            <select id="target"></select>
+          </label>
+          <label>다른 기기 마이크 켜기까지 (초)
+            <input id="others_delay" type="number" min="0" max="30" step="0.5">
+          </label>
+          <label>최대 대화 시간 (초, 지나면 자동 그만)
+            <input id="max_seconds" type="number" min="10" max="3600" step="10">
+          </label>
+          <label>첫 발언자에게 보내는 지시문 (<code>{topic}</code>, <code>{utterance}</code> 치환)
+            <textarea id="kickoff" rows="5"></textarea>
+          </label>
+          <button id="settings-save">저장</button>
+        </details>
+      </div>
+
+      <div class="panel">
+        <h2>전체 제어</h2>
+        <div class="row">
+          <button data-all="start">Start all</button>
+          <button data-all="stop">Stop all</button>
+          <button data-all="restart">Restart all</button>
+          <button data-all="deploy" class="primary">Deploy all</button>
+        </div>
+        <details>
+          <summary>새 라즈베리 파이 추가 (설치 명령)</summary>
+          <p class="muted">Pi 터미널에 붙여넣고 엔터. 끝나면 아래 목록에 자동으로 뜸.</p>
+          <div class="row"><code id="install" class="copy"></code><button id="install-copy">복사</button></div>
+        </details>
+        <details>
+          <summary>zip 업로드 (repo에 없는 프로젝트)</summary>
+          <div class="row">
+            <input id="upload-name" placeholder="이름 (영어, 예: heol)">
+            <input id="upload-file" type="file" accept=".zip">
+            <button id="upload">업로드</button>
+          </div>
+        </details>
+        <details>
+          <summary>공용 API 키 <span id="default-key" class="muted"></span></summary>
+          <p class="muted">기기에 개별 키가 없으면 이 키를 씀. 바꾼 뒤 Restart 해야 적용됨.</p>
+          <div class="row">
+            <input id="default-key-input" type="password" placeholder="AIza…" autocomplete="off">
+            <button id="default-key-save">저장</button>
+          </div>
+        </details>
+        <details>
+          <summary>위험</summary>
+          <div class="row">
+            <button data-all="update_agent">Agent 업데이트 (전체)</button>
+            <button data-all="reboot" class="danger">Reboot all</button>
+            <button data-all="poweroff" class="danger">전원 끄기 all</button>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="devices"></section>
+    <p id="empty" class="muted">아직 연결된 기기가 없음. “새 라즈베리 파이 추가”의 명령을 Pi에서 실행하세요.</p>
+  </main>
+
+  <div id="toasts"></div>
+
+  <template id="card">
+    <article class="card">
+      <div class="head">
+        <span class="dot"></span>
+        <input data-f="name" class="name" aria-label="기기 이름">
+        <select data-f="role" aria-label="역할">
+          <option value="agent">agent</option>
+          <option value="master">master</option>
+        </select>
+      </div>
+      <p data-f="meta" class="muted"></p>
+      <div class="row">
+        <select data-f="project" aria-label="프로젝트"></select>
+        <span data-f="state" class="badge"></span>
+        <span data-f="voice" class="badge"></span>
+      </div>
+      <div class="row">
+        <button data-a="start">Start</button>
+        <button data-a="stop">Stop</button>
+        <button data-a="restart">Restart</button>
+        <button data-a="deploy" class="primary">Deploy</button>
+        <button data-a="identify">Identify</button>
+      </div>
+      <details data-f="more">
+        <summary>설정 · 프롬프트 · 로그</summary>
+        <label>이 기기 API 키 <span data-f="key" class="muted"></span>
+          <div class="row">
+            <input data-f="key-input" type="password" placeholder="비우면 공용 키" autocomplete="off">
+            <button data-a="key-save">저장 + 재시작</button>
+          </div>
+        </label>
+        <label>프롬프트 (manifest의 prompt_file) <span data-f="prompt-note" class="muted"></span>
+          <textarea data-f="prompt" rows="6"></textarea>
+        </label>
+        <div class="row">
+          <button data-a="prompt-load">기기에서 불러오기</button>
+          <button data-a="prompt-save" class="primary">저장 + 재시작</button>
+          <button data-a="prompt-reset">원래 프롬프트로</button>
+        </div>
+        <label>manifest (실행 방법) <span data-f="manifest-note" class="muted"></span>
+          <textarea data-f="manifest" rows="8" spellcheck="false"></textarea>
+        </label>
+        <div class="row">
+          <button data-a="manifest-save">저장 (다음 Deploy부터)</button>
+          <button data-a="manifest-auto">자동 추측으로</button>
+        </div>
+        <label>로그</label>
+        <pre data-f="logs"></pre>
+        <div class="row">
+          <button data-a="update_agent">Agent 업데이트</button>
+          <button data-a="reboot" class="danger">Reboot</button>
+          <button data-a="forget" class="danger">목록에서 삭제</button>
+        </div>
+      </details>
+    </article>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

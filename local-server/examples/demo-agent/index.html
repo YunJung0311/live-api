@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo Agent</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; color: #fff; overflow: hidden; font-family: system-ui, sans-serif; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+    #hud { position: fixed; left: 8px; right: 8px; bottom: 8px; font-size: 12px; opacity: .7; }
+    #start { position: fixed; top: 8px; right: 8px; }
+  </style>
+</head>
+<body>
+  <canvas id="face"></canvas>
+  <div id="hud"><b id="name">demo</b> · <span id="status">sleep</span><div id="caption"></div></div>
+  <button id="start">대화 시작/끝 (맥 테스트용)</button>
+  <script src="key.js" onerror="window.GEMINI_KEY = ''"></script>
+  <script src="live-bridge.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
