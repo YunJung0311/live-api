@@ -12,12 +12,15 @@
 //
 // 맥에서 혼자 개발할 때는 agent가 없으니 조용히 아무 일도 안 함 (기존 버튼 그대로 쓰면 됨).
 (function () {
-  const URL = "ws://127.0.0.1:8765/bridge";
+  const URL = window.OCTO_CONFIG?.bridge || "ws://127.0.0.1:8765/bridge";
   const listeners = {};
   let socket = null;
   let handlers = null;
   let running = false;
+  let wanted = false;
+  let retry = null;
   let queue = Promise.resolve();
+  const early = []; // 연결 전에 생긴 로그(시작하자마자 난 에러 등)는 모아뒀다가 연결되면 보냄
 
   const bridge = {
     connected: false,
@@ -44,21 +47,25 @@
     ended() {
       running = false;
       send({ type: "voice_state", state: "sleep" });
+      clearTimeout(retry);
+      if (wanted && bridge.connected) retry = setTimeout(() => handle({ type: "wake" }), 5000);
     },
     log(...parts) {
       send({ type: "log", text: parts.map(String).join(" ") });
     },
     // 마스터 전용: 관람객 말에서 주제를 뽑으면 호출
-    startChat(topic, utterance = "") {
-      send({ type: "event", name: "start_chat", topic, utterance });
+    startChat(topic, utterance = "", audio = null) {
+      send({ type: "event", name: "start_chat", topic, utterance, audio });
     },
     stopChat() {
       send({ type: "event", name: "stop_chat" });
     },
+    prompt(text) { send({ type: "project_prompt", text }); },
   };
 
   function send(msg) {
     if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(msg));
+    else if (msg.type === "log" && early.length < 50) early.push(msg);
   }
 
   function emit(type, msg) {
@@ -72,6 +79,7 @@
   }
 
   async function wake() {
+    wanted = true;
     if (running || !handlers?.start) return;
     await handlers.start();
     running = true;
@@ -79,7 +87,9 @@
   }
 
   async function sleep() {
-    if (!running || !handlers?.stop) return;
+    wanted = false;
+    clearTimeout(retry);
+    if (!handlers?.stop) return;
     running = false;
     await handlers.stop();
     send({ type: "voice_state", state: "sleep" });
@@ -93,7 +103,7 @@
     sleep,
     async kickoff(msg) {
       await wake();
-      handlers?.say?.(msg.text);
+      await handlers?.say?.(msg.text, msg.audio);
     },
     mode(msg) {
       bridge.mode = msg.mode;
@@ -107,19 +117,28 @@
     const action = actions[msg.type];
     queue = queue
       .then(() => action?.(msg))
-      .then(() => emit(msg.type, msg))
-      .catch((error) => bridge.log(`${msg.type} 실패:`, error?.message || error));
+      .then(() => {
+        emit(msg.type, msg);
+        if (msg.req) send({ type: "voice_result", req: msg.req, ok: true });
+      })
+      .catch((error) => {
+        bridge.log(`${msg.type} 실패:`, error?.message || error);
+        if (msg.req) send({ type: "voice_result", req: msg.req, ok: false, message: String(error?.message || error) });
+        if (wanted) bridge.ended();
+      });
   }
 
   function open() {
     socket = new WebSocket(URL);
     socket.onopen = () => {
       bridge.connected = true;
+      for (const msg of early.splice(0)) send(msg);
       emit("connected", {});
     };
     socket.onmessage = (event) => handle(JSON.parse(event.data));
     socket.onclose = () => {
       bridge.connected = false;
+      handle({ type: "sleep" });
       setTimeout(open, 2000);
     };
     socket.onerror = () => socket.close();

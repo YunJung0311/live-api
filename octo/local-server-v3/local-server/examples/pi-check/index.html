@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pi Check</title>
+  <!--
+    Pi 점검용 페이지 (Gemini 키 필요 없음).
+    대시보드에서 이 Pi에 '예제 · pi-check'를 Deploy 하면:
+      - 화면에 기기 이름이 크게 뜸 → 화면/이름 확인
+      - 초록 막대가 소리에 따라 움직임 → 마이크 확인
+      - Identify → 노란 화면 + 삑 → 스피커 확인
+      - 대시보드 '대화 시작'/'그만' → 상태 글자가 바뀜 → 쇼 신호 확인
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: #111; color: #eee; }
+    body { display: grid; place-items: center; overflow: hidden; font-family: system-ui, "NanumGothic", sans-serif; }
+    main { width: 92vw; text-align: center; }
+    #name { font-size: 14vmin; font-weight: 800; line-height: 1.1; word-break: keep-all; }
+    #role { font-size: 5vmin; opacity: .7; margin-top: 1vmin; }
+    #state { display: inline-block; margin: 3vmin 0; padding: 1vmin 3vmin; border-radius: 99px; font-size: 5vmin; font-weight: 700; background: #333; }
+    #state.listening { background: #1f9d55; }
+    #state.speaking { background: #e8742b; }
+    .meter { height: 4vmin; background: #333; border-radius: 99px; overflow: hidden; }
+    .meter i { display: block; height: 100%; width: 0; background: #7ce0a0; }
+    #info { font-size: 3.6vmin; opacity: .6; margin-top: 2vmin; line-height: 1.5; }
+    #said { font-size: 4.5vmin; margin-top: 2vmin; color: #ffd27a; min-height: 1em; }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="name">Pi Check</div>
+    <div id="role">bridge 연결 기다리는 중…</div>
+    <div id="state">-</div>
+    <div class="meter"><i id="level"></i></div>
+    <div id="info"></div>
+    <div id="said"></div>
+  </main>
+  <script src="live-bridge.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let session = false;
+    let role = "";
+    let mode = "idle";
+    let micText = "마이크 여는 중…";
+
+    function setState(text, cls = "") {
+      $("state").textContent = text;
+      $("state").className = cls;
+    }
+
+    function showRole() {
+      $("role").textContent = `${role === "master" ? "master (진행자)" : role || "?"}${mode === "chat" ? " · 대화 중" : ""}`;
+    }
+
+    function showInfo() {
+      $("info").innerHTML = "";
+      $("info").append(`화면 ${screen.width}×${screen.height} · 창 ${innerWidth}×${innerHeight}`, document.createElement("br"), micText);
+    }
+
+    async function openMeter() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const label = stream.getAudioTracks()[0]?.label || "마이크";
+        const ctx = new AudioContext();
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 1024;
+        ctx.createMediaStreamSource(stream).connect(analyser);
+        const buf = new Float32Array(analyser.fftSize);
+        const tick = () => {
+          analyser.getFloatTimeDomainData(buf);
+          let max = 0;
+          for (const v of buf) max = Math.max(max, Math.abs(v));
+          $("level").style.width = `${Math.min(100, max * 140)}%`;
+          requestAnimationFrame(tick);
+        };
+        tick();
+        micText = `마이크: ${label}`;
+        LiveBridge.log(`[pi-check] 마이크 열림: ${label} · 화면 ${screen.width}x${screen.height}`);
+      } catch (error) {
+        micText = `마이크 없음 (${error.name})`;
+        LiveBridge.log(`[pi-check] 마이크 못 엶: ${error.name} ${error.message}`);
+      }
+      showInfo();
+    }
+
+    function beep() {
+      try {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = 660;
+        gain.gain.value = 0.2;
+        osc.connect(gain).connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      } catch {
+        // 소리 못 내도 화면은 계속
+      }
+    }
+
+    LiveBridge.on("connected", () => setState(session ? "듣는 중 (세션 켜짐)" : "대기 (sleep)", session ? "listening" : ""));
+    LiveBridge.on("hello", (m) => {
+      $("name").textContent = m.name;
+      role = m.role;
+      showRole();
+    });
+    LiveBridge.on("mode", (m) => {
+      mode = m.mode;
+      showRole();
+    });
+
+    LiveBridge.connect({
+      start: async () => {
+        session = true;
+        setState("듣는 중 (세션 켜짐)", "listening");
+      },
+      stop: async () => {
+        session = false;
+        setState("대기 (sleep)");
+        $("said").textContent = "";
+      },
+      say: (text) => {
+        $("said").textContent = "첫 발언자로 뽑힘!";
+        LiveBridge.log(`[pi-check] kickoff 받음: ${text.slice(0, 80)}`);
+        beep();
+        setState("말하는 중", "speaking");
+        LiveBridge.speaking(true);
+        setTimeout(() => {
+          LiveBridge.speaking(false);
+          if (session) setState("듣는 중 (세션 켜짐)", "listening");
+        }, 2500);
+      },
+    });
+
+    addEventListener("resize", showInfo);
+    showInfo();
+    openMeter();
+  </script>
+</body>
+</html>

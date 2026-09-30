@@ -51,16 +51,48 @@
         </div>
         <details>
           <summary>새 라즈베리 파이 추가 (설치 명령)</summary>
-          <p class="muted">Pi 터미널에 붙여넣고 엔터. 끝나면 아래 목록에 자동으로 뜸.</p>
-          <div class="row"><code id="install" class="copy"></code><button id="install-copy">복사</button></div>
+          <p class="muted">Pi 터미널에 붙여넣고 엔터 → 끝나면 이 화면 위쪽에 <b>연결 요청</b>이 뜸 → <b>허용</b>.</p>
+          <div class="row"><code id="join" class="copy"></code><button id="join-copy">복사</button></div>
+          <div id="join-ip-box" hidden>
+            <p class="muted">“Could not resolve host”가 나오면 (.local 이름이 안 되는 네트워크) 이걸로:</p>
+            <div class="row"><code id="join-ip" class="copy"></code><button id="join-ip-copy">복사</button></div>
+          </div>
+          <details>
+            <summary>허용 없이 바로 붙이는 명령 (토큰 포함 — 단톡방 등에 올리지 말기)</summary>
+            <div class="row"><code id="install" class="copy"></code><button id="install-copy">복사</button></div>
+            <div id="install-ip-box" hidden>
+              <div class="row"><code id="install-ip" class="copy"></code><button id="install-ip-copy">복사</button></div>
+            </div>
+          </details>
         </details>
         <details>
-          <summary>zip 업로드 (repo에 없는 프로젝트)</summary>
+          <summary>작품 올리기 (목록에만 추가)</summary>
+          <p class="muted">보통은 아래 기기 카드에 바로 끌어다 놓으면 됨. 여기는 여러 Pi가 같이 쓸 작품을 미리 올려둘 때.</p>
           <div class="row">
-            <input id="upload-name" placeholder="이름 (영어, 예: heol)">
-            <input id="upload-file" type="file" accept=".zip">
-            <button id="upload">업로드</button>
+            <input id="upload-name" placeholder="이름 (비우면 파일/폴더 이름)">
           </div>
+          <div class="row">
+            <input id="upload-file" type="file" accept=".zip,.html,.htm" hidden>
+            <input id="upload-dir" type="file" webkitdirectory hidden>
+            <button id="upload-file-btn">zip 올리기</button>
+            <button id="upload-dir-btn">폴더 올리기</button>
+            <span id="upload-note" class="muted"></span>
+          </div>
+        </details>
+        <details>
+          <summary>2인치 화면 (전체) <span id="screen-summary" class="muted"></span></summary>
+          <p class="muted">작품은 각 Pi에서 제일 작은 화면(2인치)에 자동으로 뜸 — 모니터를 꽂아 둬도. 옆으로 누워 보이면 방향을 바꾸세요.</p>
+          <label>방향 (모든 Pi)
+            <select id="screen_rotate">
+              <option value="keep">그대로 (OS 설정)</option>
+              <option value="0">0°</option>
+              <option value="90">90°</option>
+              <option value="180">180°</option>
+              <option value="270">270°</option>
+            </select>
+          </label>
+          <label class="check"><input type="checkbox" id="screen_only"> 모니터는 끄고 2인치 화면만 쓰기 (작품이 계속 모니터에 뜰 때만)</label>
+          <button id="screen-save">저장 (작품이 다시 켜짐)</button>
         </details>
         <details>
           <summary>공용 API 키 <span id="default-key" class="muted"></span></summary>
@@ -81,6 +113,11 @@
       </div>
     </section>
 
+    <section id="pairing" class="panel" hidden>
+      <h2>연결 요청 <span class="muted">— 설치 명령을 실행한 우리 Pi가 맞으면 허용</span></h2>
+      <div id="pairing-list"></div>
+    </section>
+
     <section id="devices"></section>
     <p id="empty" class="muted">아직 연결된 기기가 없음. “새 라즈베리 파이 추가”의 명령을 Pi에서 실행하세요.</p>
   </main>
@@ -98,6 +135,7 @@
         </select>
       </div>
       <p data-f="meta" class="muted"></p>
+      <p data-f="hw" class="muted"></p>
       <div class="row">
         <select data-f="project" aria-label="프로젝트"></select>
         <span data-f="state" class="badge"></span>
@@ -110,14 +148,67 @@
         <button data-a="deploy" class="primary">Deploy</button>
         <button data-a="identify">Identify</button>
       </div>
+      <div class="row drop-row">
+        <input data-f="zip-input" type="file" accept=".zip,.html,.htm" hidden>
+        <input data-f="dir-input" type="file" webkitdirectory hidden>
+        <button data-a="upload-zip">zip 올리기</button>
+        <button data-a="upload-folder">폴더 올리기</button>
+        <span data-f="upload-note" class="muted">← 카드에 끌어다 놓아도 됨 · 올리면 이 Pi에 바로 설치</span>
+      </div>
       <details data-f="more">
-        <summary>설정 · 프롬프트 · 로그</summary>
+        <summary>설정 · 오디오 · 프롬프트 · 로그</summary>
         <label>이 기기 API 키 <span data-f="key" class="muted"></span>
           <div class="row">
             <input data-f="key-input" type="password" placeholder="비우면 공용 키" autocomplete="off">
             <button data-a="key-save">저장 + 재시작</button>
           </div>
         </label>
+
+        <label>오디오 <span data-f="audio-note" class="muted"></span></label>
+        <div class="row">
+          <span class="tag">스피커</span>
+          <select data-f="sink" aria-label="스피커"></select>
+        </div>
+        <div class="row">
+          <span class="tag">볼륨</span>
+          <input data-f="sink-vol" type="range" min="0" max="150" step="5" aria-label="스피커 볼륨">
+          <span data-f="sink-vol-text" class="vol"></span>
+        </div>
+        <div class="row">
+          <span class="tag">마이크</span>
+          <select data-f="source" aria-label="마이크"></select>
+        </div>
+        <div class="row">
+          <span class="tag">감도</span>
+          <input data-f="source-vol" type="range" min="0" max="150" step="5" aria-label="마이크 볼륨">
+          <span data-f="source-vol-text" class="vol"></span>
+        </div>
+        <div class="row">
+          <button data-a="audio-load">불러오기</button>
+          <button data-a="audio-save" class="primary">적용</button>
+          <button data-a="audio-test-speaker">스피커 테스트</button>
+          <button data-a="audio-test-mic">마이크 테스트</button>
+        </div>
+        <p data-f="mic-result" class="muted"></p>
+
+        <label>2인치 화면 <span data-f="screen-note" class="muted"></span></label>
+        <div class="row">
+          <span class="tag">화면</span>
+          <select data-f="screen-target" aria-label="작품 띄울 화면"></select>
+        </div>
+        <div class="row">
+          <span class="tag">방향</span>
+          <select data-f="screen-rotate" aria-label="화면 방향">
+            <option value="default">공용 설정 따름</option>
+            <option value="keep">그대로 (OS 설정)</option>
+            <option value="0">0°</option>
+            <option value="90">90°</option>
+            <option value="180">180°</option>
+            <option value="270">270°</option>
+          </select>
+          <button data-a="screen-save" class="primary">적용</button>
+        </div>
+
         <label>프롬프트 (manifest의 prompt_file) <span data-f="prompt-note" class="muted"></span>
           <textarea data-f="prompt" rows="6"></textarea>
         </label>
